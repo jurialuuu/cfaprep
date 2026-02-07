@@ -14,6 +14,7 @@ const AIAdvisor: React.FC<AIAdvisorProps> = ({ settings, topics }) => {
   const [query, setQuery] = useState('');
   const [explanation, setExplanation] = useState('');
   const [explaining, setExplaining] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Local state for checking off daily tasks (session-based for now)
   const [checkedTasks, setCheckedTasks] = useState<Record<string, boolean>>({});
@@ -25,16 +26,17 @@ const AIAdvisor: React.FC<AIAdvisorProps> = ({ settings, topics }) => {
 
   const handleGeneratePlan = async () => {
     setLoading(true);
+    setError(null);
     try {
       const result = await getAIPersonalyPlan(settings, topics);
       if (result && result.weeklyBreakdown && result.weeklyBreakdown.length > 0) {
         setPlan(result);
       } else {
-        alert("The AI consultant could not generate a plan. Please try again in a moment.");
+        setError("The AI could not generate a valid structure. Please try again.");
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error("AI Plan Generation Error:", e);
-      alert("An error occurred while generating your plan.");
+      setError("Service temporarily unavailable. Please try again in a moment.");
     } finally {
       setLoading(false);
     }
@@ -58,28 +60,37 @@ const AIAdvisor: React.FC<AIAdvisorProps> = ({ settings, topics }) => {
         <div className="relative z-10 max-w-2xl">
           <h2 className="text-2xl font-bold mb-2">AI Study Strategist</h2>
           <p className="text-indigo-100 mb-6 text-sm">
-            Leverage Gemini 3.0 to generate a high-precision weekly roadmap with daily actionable tasks tailored for the November 2025 exam window.
+            Leverage Gemini 3.0 to generate a high-precision weekly roadmap with daily actionable tasks tailored for the November 2026 exam window.
           </p>
-          <button 
-            onClick={handleGeneratePlan}
-            disabled={loading}
-            className="bg-white text-indigo-700 px-8 py-3.5 rounded-xl font-bold hover:bg-indigo-50 transition-all disabled:opacity-50 flex items-center gap-3 shadow-lg active:scale-95"
-          >
-            {loading ? (
-              <>
-                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Crafting Your Roadmap...
-              </>
-            ) : (
-              <>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
-                Generate 8-Week Daily Plan
-              </>
+          
+          <div className="flex flex-col gap-4 items-start">
+            <button 
+              onClick={handleGeneratePlan}
+              disabled={loading}
+              className="bg-white text-indigo-700 px-8 py-3.5 rounded-xl font-bold hover:bg-indigo-50 transition-all disabled:opacity-50 flex items-center gap-3 shadow-lg active:scale-95"
+            >
+              {loading ? (
+                <>
+                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Crafting Your Roadmap...
+                </>
+              ) : (
+                <>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+                  Generate 8-Week Daily Plan
+                </>
+              )}
+            </button>
+            
+            {error && (
+              <div className="bg-red-500/20 border border-red-500/40 text-red-100 px-4 py-2 rounded-lg text-xs font-medium animate-in fade-in slide-in-from-left-2">
+                {error}
+              </div>
             )}
-          </button>
+          </div>
         </div>
         {/* Decorative element */}
         <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-white/10 rounded-full blur-3xl"></div>

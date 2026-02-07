@@ -94,10 +94,10 @@ export const CFA_TOPICS: CFATopic[] = [
   }
 ];
 
-// Target November 2026 Exam Window (Estimated Start Date)
+// Target November 2026 Exam (Estimated Window Start)
 export const TARGET_EXAM_DATE = '2026-11-17';
 
-// Estimated Registration Deadlines for November 2026 Exam cycle
+// Registration Deadlines for November 2026 (Estimated)
 export const REGISTRATION_DEADLINES = {
   earlyBird: '2026-05-12',
   standard: '2026-08-11'
