@@ -76,7 +76,14 @@ export const getAIPersonalyPlan = async (settings: StudySettings, topics: CFATop
 
 export const getTopicExplanation = async (topicName: string, query: string) => {
   const model = 'gemini-3-flash-preview';
-  const prompt = `As a CFA tutor, explain this concept for Level 1: "${query}" in the context of ${topicName}. Keep it concise and exam-focused. Use bullet points if helpful.`;
+  const prompt = `As an expert CFA Level 1 tutor, explain the following concept concisely: "${query}". 
+  
+  Requirements:
+  1. Focus on what is tested in Level 1.
+  2. Use bolding with **double asterisks** for key terms and formulas.
+  3. Use bullet points for comparisons or lists.
+  4. Keep the total length under 250 words.
+  5. Structure the response with clear paragraphs.`;
   
   try {
     const response = await ai.models.generateContent({

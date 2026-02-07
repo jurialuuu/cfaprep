@@ -18,16 +18,23 @@ const App: React.FC = () => {
 
   const [progress, setProgress] = useState<UserProgress>(() => {
     const saved = localStorage.getItem('cfa_progress');
-    const defaultProgress = {
+    const defaultProgress: UserProgress = {
       topicProgress: CFA_TOPICS.reduce((acc, t) => ({ ...acc, [t.id]: 0 }), {}),
       overallHours: 0,
-      sessions: CFA_TOPICS.reduce((acc, t) => ({ ...acc, [t.id]: [] }), {})
+      sessions: CFA_TOPICS.reduce((acc, t) => ({ ...acc, [t.id]: [] }), {}),
+      reviewNotes: CFA_TOPICS.reduce((acc, t) => ({ ...acc, [t.id]: "" }), {}),
+      savedPlan: null
     };
     if (!saved) return defaultProgress;
     
     const parsed = JSON.parse(saved);
-    if (!parsed.sessions) parsed.sessions = defaultProgress.sessions;
-    return parsed;
+    return {
+      ...defaultProgress,
+      ...parsed,
+      // Ensure nested structures exist
+      sessions: parsed.sessions || defaultProgress.sessions,
+      reviewNotes: parsed.reviewNotes || defaultProgress.reviewNotes,
+    };
   });
 
   const [settings, setSettings] = useState<StudySettings>({
@@ -57,8 +64,19 @@ const App: React.FC = () => {
     }));
   };
 
+  const handleReviewNotesChange = (topicId: string, notes: string) => {
+    setProgress(prev => ({
+      ...prev,
+      reviewNotes: { ...prev.reviewNotes, [topicId]: notes }
+    }));
+  };
+
   const handleHoursChange = (hours: number) => {
     setProgress(prev => ({ ...prev, overallHours: hours }));
+  };
+
+  const handleSavePlan = (plan: any) => {
+    setProgress(prev => ({ ...prev, savedPlan: plan }));
   };
 
   const handleAddSession = (topicId: string, session: Omit<StudySession, 'id' | 'topicId'>) => {
@@ -207,7 +225,9 @@ const App: React.FC = () => {
                   topic={topic} 
                   progress={progress.topicProgress[topic.id] || 0}
                   sessions={progress.sessions[topic.id] || []}
+                  reviewNotes={progress.reviewNotes[topic.id] || ""}
                   onProgressChange={handleProgressChange}
+                  onReviewNotesChange={handleReviewNotesChange}
                   onAddSession={handleAddSession}
                 />
               ))}
@@ -254,7 +274,12 @@ const App: React.FC = () => {
               </aside>
 
               <div className="xl:col-span-3">
-                <AIAdvisor settings={settings} topics={CFA_TOPICS} />
+                <AIAdvisor 
+                  settings={settings} 
+                  topics={CFA_TOPICS} 
+                  savedPlan={progress.savedPlan}
+                  onSavePlan={handleSavePlan}
+                />
               </div>
             </div>
           </div>

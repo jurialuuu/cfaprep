@@ -28,6 +28,8 @@ export interface UserProgress {
   topicProgress: Record<string, number>; // topicId to percentage
   overallHours: number;
   sessions: Record<string, StudySession[]>; // topicId to sessions
+  reviewNotes: Record<string, string>; // topicId to user-written review notes
+  savedPlan?: any; // The generated AI plan object
 }
 
 export interface Flashcard {

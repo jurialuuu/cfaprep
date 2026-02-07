@@ -1,16 +1,18 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { getAIPersonalyPlan, getTopicExplanation } from '../services/geminiService';
 import { StudySettings, CFATopic } from '../types';
+import { AI_GUIDE_QUESTIONS } from '../constants';
 
 interface AIAdvisorProps {
   settings: StudySettings;
   topics: CFATopic[];
+  savedPlan?: any;
+  onSavePlan: (plan: any) => void;
 }
 
-const AIAdvisor: React.FC<AIAdvisorProps> = ({ settings, topics }) => {
+const AIAdvisor: React.FC<AIAdvisorProps> = ({ settings, topics, savedPlan, onSavePlan }) => {
   const [loading, setLoading] = useState(false);
-  const [plan, setPlan] = useState<any>(null);
   const [query, setQuery] = useState('');
   const [explanation, setExplanation] = useState('');
   const [explaining, setExplaining] = useState(false);
@@ -30,7 +32,7 @@ const AIAdvisor: React.FC<AIAdvisorProps> = ({ settings, topics }) => {
     try {
       const result = await getAIPersonalyPlan(settings, topics);
       if (result && result.weeklyBreakdown && result.weeklyBreakdown.length > 0) {
-        setPlan(result);
+        onSavePlan(result);
       } else {
         setError("The AI could not generate a valid structure. Please try again.");
       }
@@ -42,16 +44,41 @@ const AIAdvisor: React.FC<AIAdvisorProps> = ({ settings, topics }) => {
     }
   };
 
-  const handleAsk = async () => {
-    if (!query) return;
+  const handleAsk = async (q?: string) => {
+    const finalQuery = q || query;
+    if (!finalQuery) return;
     setExplaining(true);
+    setExplanation(''); // Clear previous response while loading
     try {
-      const result = await getTopicExplanation("General CFA Concepts", query);
+      const result = await getTopicExplanation("General CFA Concepts", finalQuery);
       setExplanation(result || "I couldn't find a clear explanation for that concept.");
+      if (!q) setQuery('');
     } catch (e) {
       setExplanation("Tutor service is currently unavailable.");
     }
     setExplaining(false);
+  };
+
+  // Simple Markdown-to-HTML formatter for the explanation
+  const formatResponse = (text: string) => {
+    if (!text) return null;
+    
+    // Replace **bold** with <b>bold</b>
+    let formatted = text.replace(/\*\*(.*?)\*\*/g, '<b class="text-white font-bold">$1</b>');
+    
+    // Replace * bullet points or - bullet points at start of lines
+    formatted = formatted.replace(/^\s*[\*\-]\s+(.*)/gm, '<li class="ml-4 mb-1">$1</li>');
+    
+    // Wrap bullet groups in ul if needed (simplified)
+    if (formatted.includes('<li')) {
+        // This is a basic approach; for complex markdown a library is better, 
+        // but this fixes the "lots of **" issue.
+    }
+
+    // Handle newlines
+    return formatted.split('\n').map((line, i) => (
+      <p key={i} className="mb-2" dangerouslySetInnerHTML={{ __html: line }} />
+    ));
   };
 
   return (
@@ -80,7 +107,7 @@ const AIAdvisor: React.FC<AIAdvisorProps> = ({ settings, topics }) => {
               ) : (
                 <>
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
-                  Generate 8-Week Daily Plan
+                  {savedPlan ? 'Regenerate Study Plan' : 'Generate 8-Week Daily Plan'}
                 </>
               )}
             </button>
@@ -96,18 +123,18 @@ const AIAdvisor: React.FC<AIAdvisorProps> = ({ settings, topics }) => {
         <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-white/10 rounded-full blur-3xl"></div>
       </div>
 
-      {plan && (
+      {savedPlan && (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
             <h3 className="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
               <svg className="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               Core Strategy
             </h3>
-            <p className="text-slate-600 leading-relaxed text-sm bg-slate-50 p-4 rounded-xl border border-slate-100">{plan.strategy}</p>
+            <p className="text-slate-600 leading-relaxed text-sm bg-slate-50 p-4 rounded-xl border border-slate-100">{savedPlan.strategy}</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {plan.weeklyBreakdown.map((week: any, wIdx: number) => (
+            {savedPlan.weeklyBreakdown.map((week: any, wIdx: number) => (
               <div key={wIdx} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-indigo-200 transition-colors">
                 <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
                   <span className="font-extrabold text-indigo-600 tracking-tight">WEEK {week.week}</span>
@@ -156,7 +183,7 @@ const AIAdvisor: React.FC<AIAdvisorProps> = ({ settings, topics }) => {
               Candidate Survival Tips
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {plan.tips.map((tip: string, i: number) => (
+              {savedPlan.tips.map((tip: string, i: number) => (
                 <div key={i} className="flex items-start text-[11px] text-indigo-700 p-3 bg-white rounded-xl border border-indigo-100 hover:shadow-sm transition-shadow">
                   <span className="mr-3 mt-1.5 block h-1 w-1 rounded-full bg-indigo-400 shrink-0"></span>
                   {tip}
@@ -172,6 +199,20 @@ const AIAdvisor: React.FC<AIAdvisorProps> = ({ settings, topics }) => {
           <h3 className="text-lg font-bold mb-2">Instant CFA Concept Tutor</h3>
           <p className="text-slate-400 text-sm">Ask about any difficult Level 1 concept for a concise, exam-focused explanation.</p>
         </div>
+
+        {/* Guide Questions */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          {AI_GUIDE_QUESTIONS.map((q, i) => (
+            <button
+              key={i}
+              onClick={() => handleAsk(q)}
+              className="text-[10px] font-bold px-3 py-1.5 rounded-full border border-slate-700 text-slate-400 hover:border-indigo-500 hover:text-indigo-400 transition-colors"
+            >
+              {q}
+            </button>
+          ))}
+        </div>
+
         <div className="flex gap-3">
           <input 
             type="text" 
@@ -182,7 +223,7 @@ const AIAdvisor: React.FC<AIAdvisorProps> = ({ settings, topics }) => {
             onKeyDown={(e) => e.key === 'Enter' && handleAsk()}
           />
           <button 
-            onClick={handleAsk}
+            onClick={() => handleAsk()}
             disabled={explaining || !query}
             className="bg-indigo-600 px-8 py-3.5 rounded-xl font-bold hover:bg-indigo-500 transition-all disabled:opacity-30 flex items-center gap-2"
           >
@@ -195,12 +236,20 @@ const AIAdvisor: React.FC<AIAdvisorProps> = ({ settings, topics }) => {
           </button>
         </div>
         {explanation && (
-          <div className="mt-6 p-6 bg-slate-800/50 rounded-2xl border border-slate-700/50 text-sm text-slate-300 leading-relaxed animate-in slide-in-from-top-4 duration-300">
-            <div className="flex items-center gap-2 mb-3">
+          <div className="mt-6 p-6 bg-slate-800/80 rounded-2xl border border-slate-700/50 text-sm text-slate-200 leading-relaxed animate-in slide-in-from-top-4 duration-300 backdrop-blur-sm">
+            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-700/50">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tutor Response</span>
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Expert Tutor Analysis</span>
+              <button 
+                onClick={() => setExplanation('')}
+                className="ml-auto text-slate-500 hover:text-white transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
             </div>
-            {explanation}
+            <div className="prose prose-invert prose-sm max-w-none">
+                {formatResponse(explanation)}
+            </div>
           </div>
         )}
       </div>

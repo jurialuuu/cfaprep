@@ -94,6 +94,15 @@ export const CFA_TOPICS: CFATopic[] = [
   }
 ];
 
+export const AI_GUIDE_QUESTIONS = [
+  "Explain Modified vs. Effective Duration",
+  "How does LIFO vs FIFO impact Net Income in inflation?",
+  "Explain the difference between Type I and Type II errors",
+  "What is the GIPS requirement for composites?",
+  "Calculate WACC with tax shield",
+  "Explain the difference between Forward and Futures contracts"
+];
+
 // Target November 2026 Exam (Estimated Window Start)
 export const TARGET_EXAM_DATE = '2026-11-17';
 
