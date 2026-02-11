@@ -5,6 +5,7 @@ export const CFA_TOPICS: CFATopic[] = [
   {
     id: 'ethics',
     name: 'Ethics and Professional Standards',
+    category: 'Ethics',
     weightMin: 15,
     weightMax: 20,
     description: 'The foundation of the CFA program. Covers the Code of Ethics and Standards of Professional Conduct.',
@@ -14,6 +15,7 @@ export const CFA_TOPICS: CFATopic[] = [
   {
     id: 'quant',
     name: 'Quantitative Methods',
+    category: 'Investment Tools',
     weightMin: 6,
     weightMax: 9,
     description: 'Time value of money, probability, statistics, and hypothesis testing.',
@@ -23,6 +25,7 @@ export const CFA_TOPICS: CFATopic[] = [
   {
     id: 'econ',
     name: 'Economics',
+    category: 'Investment Tools',
     weightMin: 6,
     weightMax: 9,
     description: 'Microeconomics, Macroeconomics, and Monetary/Fiscal Policy.',
@@ -32,6 +35,7 @@ export const CFA_TOPICS: CFATopic[] = [
   {
     id: 'fra',
     name: 'Financial Statement Analysis',
+    category: 'Investment Tools',
     weightMin: 11,
     weightMax: 14,
     description: 'Balance sheets, income statements, cash flow, and financial reporting standards.',
@@ -41,6 +45,7 @@ export const CFA_TOPICS: CFATopic[] = [
   {
     id: 'corp',
     name: 'Corporate Issuers',
+    category: 'Investment Tools',
     weightMin: 6,
     weightMax: 9,
     description: 'Corporate governance, capital structure, and investment decisions.',
@@ -50,6 +55,7 @@ export const CFA_TOPICS: CFATopic[] = [
   {
     id: 'equity',
     name: 'Equity Investments',
+    category: 'Asset Classes',
     weightMin: 11,
     weightMax: 14,
     description: 'Market structure, indexes, and equity valuation techniques.',
@@ -59,6 +65,7 @@ export const CFA_TOPICS: CFATopic[] = [
   {
     id: 'fixed',
     name: 'Fixed Income',
+    category: 'Asset Classes',
     weightMin: 11,
     weightMax: 14,
     description: 'Bond features, yields, valuation, and risk management.',
@@ -68,6 +75,7 @@ export const CFA_TOPICS: CFATopic[] = [
   {
     id: 'deriv',
     name: 'Derivatives',
+    category: 'Asset Classes',
     weightMin: 5,
     weightMax: 8,
     description: 'Forwards, futures, options, and swaps.',
@@ -77,6 +85,7 @@ export const CFA_TOPICS: CFATopic[] = [
   {
     id: 'alt',
     name: 'Alternative Investments',
+    category: 'Asset Classes',
     weightMin: 7,
     weightMax: 10,
     description: 'Real estate, private equity, hedge funds, and commodities.',
@@ -86,6 +95,7 @@ export const CFA_TOPICS: CFATopic[] = [
   {
     id: 'port',
     name: 'Portfolio Management',
+    category: 'Portfolio Management',
     weightMin: 8,
     weightMax: 12,
     description: 'Portfolio construction, asset allocation, and risk management.',
@@ -103,10 +113,10 @@ export const AI_GUIDE_QUESTIONS = [
   "Explain the difference between Forward and Futures contracts"
 ];
 
-// Target November 2026 Exam (Estimated Window Start)
+// Target November 2026 Exam
 export const TARGET_EXAM_DATE = '2026-11-17';
 
-// Registration Deadlines for November 2026 (Estimated)
+// Registration Deadlines for November 2026 (Estimated based on typical schedules)
 export const REGISTRATION_DEADLINES = {
   earlyBird: '2026-05-12',
   standard: '2026-08-11'

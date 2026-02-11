@@ -2,6 +2,7 @@
 export interface CFATopic {
   id: string;
   name: string;
+  category: 'Ethics' | 'Investment Tools' | 'Asset Classes' | 'Portfolio Management';
   weightMin: number;
   weightMax: number;
   description: string;

@@ -31,7 +31,6 @@ const App: React.FC = () => {
     return {
       ...defaultProgress,
       ...parsed,
-      // Ensure nested structures exist
       sessions: parsed.sessions || defaultProgress.sessions,
       reviewNotes: parsed.reviewNotes || defaultProgress.reviewNotes,
     };
@@ -50,9 +49,9 @@ const App: React.FC = () => {
 
   const daysRemaining = useMemo(() => {
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Normalized
+    today.setHours(0, 0, 0, 0);
     const exam = new Date(settings.examDate);
-    exam.setHours(0, 0, 0, 0); // Normalized
+    exam.setHours(0, 0, 0, 0);
     const diffTime = exam.getTime() - today.getTime();
     return Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
   }, [settings.examDate]);
@@ -117,24 +116,67 @@ const App: React.FC = () => {
     return list;
   }, [sortBy, filterBy]);
 
+  const groupedTopics = useMemo(() => {
+    const groups: Record<string, CFATopic[]> = {
+      'Ethics': [],
+      'Investment Tools': [],
+      'Asset Classes': [],
+      'Portfolio Management': []
+    };
+    filteredAndSortedTopics.forEach(t => groups[t.category].push(t));
+    return groups;
+  }, [filteredAndSortedTopics]);
+
+  const categoryCompletion = useMemo(() => {
+    const stats: Record<string, number> = {};
+    (Object.entries(groupedTopics) as [string, CFATopic[]][]).forEach(([cat, topics]) => {
+      if (topics.length === 0) {
+        stats[cat] = 0;
+        return;
+      }
+      const sum = topics.reduce((acc, t) => acc + (progress.topicProgress[t.id] || 0), 0);
+      stats[cat] = Math.round(sum / topics.length);
+    });
+    return stats;
+  }, [groupedTopics, progress.topicProgress]);
+
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id);
+    if (element) {
+      const offset = 100;
+      const bodyRect = document.body.getBoundingClientRect().top;
+      const elementRect = element.getBoundingClientRect().top;
+      const elementPosition = elementRect - bodyRect;
+      const offsetPosition = elementPosition - offset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+  };
+
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">C</div>
-            <h1 className="font-bold text-slate-800 tracking-tight hidden sm:block">Level 1 Strategy</h1>
+    <div className="min-h-screen flex flex-col bg-slate-50 selection:bg-indigo-100 selection:text-indigo-900">
+      <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white font-black text-sm">C</div>
+            <div className="flex flex-col -space-y-1">
+              <h1 className="font-bold text-slate-900 tracking-tight text-sm">Level 1 Strategy</h1>
+              <span className="text-[9px] font-bold text-indigo-600 tracking-widest uppercase">Nov 2026 Window</span>
+            </div>
           </div>
           
-          <nav className="flex space-x-1 sm:space-x-4 overflow-x-auto no-scrollbar">
+          <nav className="flex bg-slate-100 p-1 rounded-xl">
             {(['dashboard', 'topics', 'planner', 'practice'] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
                   activeTab === tab 
-                  ? 'bg-blue-50 text-blue-600' 
-                  : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                  ? 'bg-white text-slate-900 shadow-sm' 
+                  : 'text-slate-500 hover:text-slate-800'
                 }`}
               >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -142,175 +184,112 @@ const App: React.FC = () => {
             ))}
           </nav>
 
-          <div className="hidden md:flex items-center text-xs text-slate-500 font-medium">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-pulse"></span>
-            November 2026 Prep Active
+          <div className="hidden md:flex items-center text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2 animate-pulse"></span>
+            Live Session
           </div>
         </div>
       </header>
 
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 py-8">
+      <main className="flex-1 max-w-7xl mx-auto w-full px-6 py-6">
         {activeTab === 'dashboard' && (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
-            <header>
-              <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Candidate Dashboard</h2>
-              <p className="text-slate-500 mt-1">Manage your overall timeline and registration window.</p>
-            </header>
+          <div className="space-y-6 animate-in fade-in duration-300">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-black text-slate-900 tracking-tight uppercase tracking-widest">Candidate Pulse</h2>
+            </div>
             <Dashboard 
               progress={progress} 
               daysRemaining={daysRemaining} 
               onHoursChange={handleHoursChange}
             />
-            
-            <section className="mt-12 bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div>
-                  <h3 className="text-xl font-bold text-slate-800">Ready to build your roadmap?</h3>
-                  <p className="text-slate-500">Generate a full study calendar with daily action items.</p>
-                </div>
-                <button 
-                  onClick={() => setActiveTab('planner')}
-                  className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 transition-all flex items-center justify-center shadow-lg shadow-blue-100"
-                >
-                  Consult AI Advisor
-                </button>
-              </div>
-            </section>
           </div>
         )}
 
         {activeTab === 'topics' && (
-          <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-            <header className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
-              <div>
-                <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Curriculum Mastery</h2>
-                <p className="text-slate-500 mt-1">Track proficiency, log sessions, and use the stopwatch timer.</p>
-              </div>
-              
-              <div className="flex flex-wrap gap-3">
-                <div className="flex items-center bg-white rounded-lg border border-slate-200 px-3 py-1.5 shadow-sm">
-                  <span className="text-[10px] font-bold text-slate-400 mr-2 uppercase">Sort By:</span>
+          <div className="animate-in fade-in duration-300">
+            <div className="sticky top-[56px] z-40 bg-slate-50/90 backdrop-blur-sm py-3 mb-6 border-b border-slate-200 -mx-6 px-6">
+              <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 overflow-x-auto no-scrollbar">
+                <div className="flex gap-2">
+                  {Object.keys(groupedTopics).map(cat => (
+                    <button 
+                      key={cat}
+                      onClick={() => scrollToSection(cat)}
+                      className="group flex items-center gap-3 px-3 py-1.5 bg-white rounded-lg border border-slate-200 hover:border-indigo-400 transition-all shadow-sm"
+                    >
+                      <span className="text-[10px] font-bold text-slate-600 uppercase tracking-tight">{cat}</span>
+                      <span className="text-[10px] font-black text-indigo-600">{categoryCompletion[cat]}%</span>
+                    </button>
+                  ))}
+                </div>
+                
+                <div className="flex gap-2 shrink-0">
                   <select 
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as SortOption)}
-                    className="text-xs font-bold text-slate-600 outline-none bg-transparent"
+                    className="text-[10px] font-bold text-slate-700 outline-none bg-white border border-slate-200 rounded-lg px-2 py-1 shadow-sm uppercase tracking-tight"
                   >
                     <option value="name">Name</option>
                     <option value="difficulty">Difficulty</option>
-                    <option value="weight">Exam Weight</option>
-                    <option value="estimated">Est. Hours</option>
+                    <option value="weight">Weight</option>
                   </select>
-                </div>
-                
-                <div className="flex items-center bg-white rounded-lg border border-slate-200 px-3 py-1.5 shadow-sm">
-                  <span className="text-[10px] font-bold text-slate-400 mr-2 uppercase">Filter Diff:</span>
                   <select 
                     value={filterBy}
                     onChange={(e) => setFilterBy(e.target.value as FilterOption)}
-                    className="text-xs font-bold text-slate-600 outline-none bg-transparent"
+                    className="text-[10px] font-bold text-slate-700 outline-none bg-white border border-slate-200 rounded-lg px-2 py-1 shadow-sm uppercase tracking-tight"
                   >
-                    <option value="All">All</option>
-                    <option value="High">High</option>
-                    <option value="Medium">Medium</option>
-                    <option value="Low">Low</option>
+                    <option value="All">All Levels</option>
+                    <option value="High">High Only</option>
                   </select>
                 </div>
               </div>
-            </header>
+            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredAndSortedTopics.map(topic => (
-                <TopicCard 
-                  key={topic.id} 
-                  topic={topic} 
-                  progress={progress.topicProgress[topic.id] || 0}
-                  sessions={progress.sessions[topic.id] || []}
-                  reviewNotes={progress.reviewNotes[topic.id] || ""}
-                  onProgressChange={handleProgressChange}
-                  onReviewNotesChange={handleReviewNotesChange}
-                  onAddSession={handleAddSession}
-                />
+            <div className="space-y-12 pb-12">
+              {(Object.entries(groupedTopics) as [string, CFATopic[]][]).map(([category, topics]) => topics.length > 0 && (
+                <section key={category} id={category} className="scroll-mt-32">
+                  <div className="flex items-center gap-4 mb-6">
+                    <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.3em] shrink-0">{category}</h3>
+                    <div className="flex-1 h-px bg-slate-200"></div>
+                    <span className="text-[10px] font-bold text-slate-400">{topics.length} Units</span>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {topics.map(topic => (
+                      <TopicCard 
+                        key={topic.id} 
+                        topic={topic} 
+                        progress={progress.topicProgress[topic.id] || 0}
+                        sessions={progress.sessions[topic.id] || []}
+                        reviewNotes={progress.reviewNotes[topic.id] || ""}
+                        onProgressChange={handleProgressChange}
+                        onReviewNotesChange={handleReviewNotesChange}
+                        onAddSession={handleAddSession}
+                      />
+                    ))}
+                  </div>
+                </section>
               ))}
             </div>
           </div>
         )}
 
         {activeTab === 'planner' && (
-          <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-             <header className="mb-8">
-              <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Smart Planner</h2>
-              <p className="text-slate-500 mt-1">AI-driven scheduling with daily task breakdowns for November 2026.</p>
-            </header>
-            <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-              <aside className="xl:col-span-1">
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 sticky top-24 shadow-sm">
-                  <h4 className="font-bold text-slate-800 mb-6 uppercase text-xs tracking-widest">Study Profile</h4>
-                  <div className="space-y-6">
-                    <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-2">Target Weekly Load</label>
-                      <div className="flex items-center gap-2">
-                         <input 
-                          type="number" 
-                          value={settings.hoursPerWeek}
-                          onChange={(e) => setSettings({...settings, hoursPerWeek: parseInt(e.target.value)})}
-                          className="w-20 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm font-bold"
-                        />
-                        <span className="text-xs text-slate-400">Hours</span>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-2">Finance Background</label>
-                      <select 
-                        value={settings.hasBackground ? 'yes' : 'no'}
-                        onChange={(e) => setSettings({...settings, hasBackground: e.target.value === 'yes'})}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium"
-                      >
-                        <option value="no">Novice (Non-Finance)</option>
-                        <option value="yes">Pro (Finance Background)</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              </aside>
-
-              <div className="xl:col-span-3">
-                <AIAdvisor 
-                  settings={settings} 
-                  topics={CFA_TOPICS} 
-                  savedPlan={progress.savedPlan}
-                  onSavePlan={handleSavePlan}
-                />
-              </div>
-            </div>
+          <div className="animate-in fade-in duration-300">
+            <AIAdvisor 
+              settings={settings} 
+              topics={CFA_TOPICS} 
+              savedPlan={progress.savedPlan}
+              onSavePlan={handleSavePlan}
+            />
           </div>
         )}
 
         {activeTab === 'practice' && (
-          <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-            <header className="mb-8">
-              <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Practice Arena</h2>
-              <p className="text-slate-500 mt-1">Drill questions and terms to reinforce your reading.</p>
-            </header>
+          <div className="animate-in fade-in duration-300">
             <Practice />
           </div>
         )}
       </main>
-
-      <footer className="bg-white border-t border-slate-200 py-12">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <div className="flex justify-center mb-6">
-            <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white font-bold text-xl">C</div>
-          </div>
-          <p className="text-sm text-slate-500 font-medium">© 2026 CFA Level 1 Study Strategy Planner</p>
-          <div className="mt-4 flex justify-center gap-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-            <span className="hover:text-blue-600 cursor-help">Curriculum Guide</span>
-            <span>•</span>
-            <span className="hover:text-blue-600 cursor-help">Study Groups</span>
-            <span>•</span>
-            <span className="hover:text-blue-600 cursor-help">Mock Exams</span>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 };

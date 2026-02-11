@@ -15,7 +15,7 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({ progress, daysRemaining, onHoursChange }) => {
   const chartData = CFA_TOPICS.map(topic => ({
-    name: topic.id.toUpperCase(),
+    name: topic.id.substring(0,3).toUpperCase(),
     progress: progress.topicProgress[topic.id] || 0,
     weight: (topic.weightMin + topic.weightMax) / 2
   }));
@@ -24,7 +24,11 @@ const Dashboard: React.FC<DashboardProps> = ({ progress, daysRemaining, onHoursC
     (Object.values(progress.topicProgress) as number[]).reduce((a, b) => a + b, 0) / CFA_TOPICS.length
   );
 
-  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#6366f1', '#14b8a6'];
+  const COLORS = [
+    '#0f172a', '#1e293b', '#334155', '#475569', 
+    '#64748b', '#94a3b8', '#4f46e5', '#6366f1', 
+    '#818cf8', '#a5b4fc'
+  ];
 
   const today = new Date();
   today.setHours(0,0,0,0);
@@ -32,84 +36,69 @@ const Dashboard: React.FC<DashboardProps> = ({ progress, daysRemaining, onHoursC
   const standardDate = new Date(REGISTRATION_DEADLINES.standard);
   
   const isEarlyBirdPassed = today > earlyBirdDate;
-  const isStandardPassed = today > standardDate;
 
   return (
-    <div className="space-y-6">
-      {/* Registration Reminder Alert */}
-      {!isStandardPassed && (
-        <div className={`p-4 rounded-xl border flex items-center gap-3 ${isEarlyBirdPassed ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-blue-50 border-blue-200 text-blue-800'}`}>
-          <div className="shrink-0">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-          </div>
-          <div className="flex-1">
-            <h4 className="font-bold text-sm">Action Required: Exam Registration</h4>
-            <p className="text-xs opacity-90">
-              {isEarlyBirdPassed 
-                ? `Early-bird window passed. Standard registration deadline: ${REGISTRATION_DEADLINES.standard}.` 
-                : `Save up to $300! Early-bird registration deadline: ${REGISTRATION_DEADLINES.earlyBird}.`}
-            </p>
-          </div>
-          <a 
-            href="https://www.cfainstitute.org/en/programs/cfa/exam/registration" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="text-xs font-bold underline px-3 py-1 bg-white/50 rounded-lg hover:bg-white/80 transition-colors"
-          >
-            Register Now
-          </a>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {/* Days to Exam */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col items-center justify-center">
-          <h3 className="text-slate-500 text-sm font-medium mb-1 uppercase tracking-wider">Days to Exam</h3>
-          <div className="text-4xl font-bold text-blue-600">{daysRemaining}</div>
-          <p className="text-[10px] text-slate-400 mt-2">November Window Countdown</p>
+        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+          <h3 className="text-slate-400 text-[9px] font-black uppercase tracking-widest mb-1">Time to Window</h3>
+          <div className="flex items-baseline gap-1">
+            <span className="text-2xl font-black text-slate-900">{daysRemaining}</span>
+            <span className="text-[10px] font-bold text-slate-400">Days</span>
+          </div>
         </div>
 
         {/* Overall Completion */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col items-center justify-center group relative">
-          <h3 className="text-slate-500 text-sm font-medium mb-1 uppercase tracking-wider">Overall Mastery</h3>
-          <div className="text-4xl font-bold text-emerald-500">{overallProgress}%</div>
-          <div className="w-full bg-slate-100 h-2 rounded-full mt-4 overflow-hidden">
-            <div 
-              className="bg-emerald-500 h-full transition-all duration-500" 
-              style={{ width: `${overallProgress}%` }}
-            />
+        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+          <h3 className="text-slate-400 text-[9px] font-black uppercase tracking-widest mb-1">Overall Mastery</h3>
+          <div className="flex items-baseline gap-1">
+            <span className="text-2xl font-black text-emerald-600">{overallProgress}%</span>
+            <div className="flex-1 h-1 bg-slate-100 rounded-full overflow-hidden self-center ml-2">
+              <div className="bg-emerald-500 h-full" style={{ width: `${overallProgress}%` }} />
+            </div>
           </div>
-          <p className="text-[10px] text-slate-400 mt-2">Average of all 10 sections</p>
         </div>
 
         {/* Hours Invested */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col items-center justify-center">
-          <h3 className="text-slate-500 text-sm font-medium mb-1 uppercase tracking-wider">Hours Invested</h3>
-          <div className="flex items-baseline space-x-1">
+        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+          <h3 className="text-slate-400 text-[9px] font-black uppercase tracking-widest mb-1">Study Volume</h3>
+          <div className="flex items-baseline gap-2">
             <input 
               type="number"
               value={progress.overallHours}
               onChange={(e) => onHoursChange(parseInt(e.target.value) || 0)}
-              className="text-4xl font-bold text-amber-500 bg-transparent w-24 text-center border-b-2 border-transparent hover:border-amber-200 focus:border-amber-500 focus:outline-none transition-all"
+              className="text-2xl font-black text-slate-900 bg-transparent w-16 focus:outline-none focus:ring-1 focus:ring-indigo-100 rounded"
             />
+            <span className="text-[10px] font-bold text-slate-400">/ 300h</span>
           </div>
-          <p className="text-[10px] text-slate-400 mt-2">Target: 300 Hours</p>
         </div>
 
-        {/* Charts */}
-        <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-          <h3 className="text-slate-800 font-bold mb-6">Mastery by Topic</h3>
-          <div className="h-64 w-full">
+        {/* Deadline Alert */}
+        <div className={`p-4 rounded-xl border flex flex-col justify-center ${isEarlyBirdPassed ? 'bg-amber-50 border-amber-100' : 'bg-indigo-50 border-indigo-100'}`}>
+          <h3 className={`text-[9px] font-black uppercase tracking-widest mb-1 ${isEarlyBirdPassed ? 'text-amber-600' : 'text-indigo-600'}`}>Registration</h3>
+          <p className="text-[10px] font-bold text-slate-700 leading-tight">
+            {isEarlyBirdPassed ? 'Standard Closes Aug 11' : 'Early Bird Closes May 12'}
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Mastery Distribution</h3>
+          </div>
+          <div className="h-48 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} fontSize={10} stroke="#64748b" />
-                <YAxis domain={[0, 100]} axisLine={false} tickLine={false} fontSize={10} stroke="#64748b" />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f8fafc" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} fontSize={8} fontWeight="bold" stroke="#94a3b8" />
+                <YAxis domain={[0, 100]} hide />
                 <Tooltip 
                   cursor={{ fill: '#f8fafc' }}
-                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '10px' }}
                 />
-                <Bar dataKey="progress" radius={[4, 4, 0, 0]}>
+                <Bar dataKey="progress" radius={[2, 2, 0, 0]} barSize={32}>
                   {chartData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
@@ -119,9 +108,10 @@ const Dashboard: React.FC<DashboardProps> = ({ progress, daysRemaining, onHoursC
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-          <h3 className="text-slate-800 font-bold mb-6">Weighting</h3>
-          <div className="h-64 w-full">
+        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col">
+          <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Curriculum Balance</h3>
+          {/* Explicit height wrapper for ResponsiveContainer to prevent collapsing */}
+          <div className="h-48 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -130,15 +120,20 @@ const Dashboard: React.FC<DashboardProps> = ({ progress, daysRemaining, onHoursC
                   nameKey="name"
                   cx="50%"
                   cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={5}
+                  innerRadius={30}
+                  outerRadius={50}
+                  paddingAngle={4}
+                  label={({ name }) => name}
+                  labelLine={false}
+                  style={{ fontSize: '8px', fontWeight: 'bold' }}
                 >
                   {chartData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip 
+                   contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '10px' }}
+                />
               </PieChart>
             </ResponsiveContainer>
           </div>
